@@ -2,6 +2,7 @@ package com.trp.learningapp.api.users.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.modelmapper.ModelMapper;
@@ -15,9 +16,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.trp.learningapp.api.users.data.AlbumsServiceClient;
 import com.trp.learningapp.api.users.data.UserEntity;
 import com.trp.learningapp.api.users.data.UserRepository;
 import com.trp.learningapp.api.users.shared.UserDto;
+import com.trp.learningapp.api.users.ui.model.AlbumResponseModel;
 import com.trp.learningapp.api.users.ui.model.CreateUserRequestModel;
 
 @Service
@@ -27,6 +30,8 @@ public class UserServiceImpl implements UserService {
 	UserRepository userRepository;
 	@Autowired
 	BCryptPasswordEncoder bCryptPasswordEncoder;
+	@Autowired
+	AlbumsServiceClient albumsServiceClient;
 
 	@Override
 	public UserDto createUser(UserDto userDetails) {
@@ -63,6 +68,19 @@ public class UserServiceImpl implements UserService {
 		}
 		ModelMapper mapper = new ModelMapper();
 		UserDto returnValue = mapper.map(userEntity, UserDto.class);
+		return returnValue;
+	}
+
+	@Override
+	public UserDto getUserByUserId(String userId) {
+		UserEntity userEntity = userRepository.findUserByUserId(userId);
+		if(userEntity == null) {
+			throw new UsernameNotFoundException("email  do not exist in database");
+		}
+		ModelMapper mapper = new ModelMapper();
+		UserDto returnValue = mapper.map(userEntity, UserDto.class);
+		List<AlbumResponseModel> responseModel = albumsServiceClient.getAlbums(userId);
+		returnValue.setAlbums(responseModel);
 		return returnValue;
 	}
 
